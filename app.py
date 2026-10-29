@@ -193,7 +193,10 @@ st.markdown('<div class="section-title">Resultado</div>', unsafe_allow_html=True
 if valor_m2 is None:
     st.error("Quantidade acima de 1.500 unidades. Consulte a administração.")
 else:
-    preco_bruto = area_total * valor_m2
+    preco_base = area_total * valor_m2
+    adicional_laminacao_m2 = 60.0 if laminacao in ["Laminação brilho", "Laminação fosca"] else 0.0
+    adicional_laminacao = area_total * adicional_laminacao_m2
+    preco_bruto = preco_base + adicional_laminacao
     preco_final = preco_bruto * (1 - desconto_pct / 100)
     preco_unitario = preco_final / quantidade
     comissao_valor = preco_final * (comissao_pct / 100)
@@ -221,7 +224,10 @@ else:
 
     with st.expander("Detalhes da cotação"):
         st.write(f"**Área total:** {area_total:.2f} m²")
-        st.write(f"**Valor aplicado:** {moeda(valor_m2)}/m²")
+        st.write(f"**Valor base aplicado:** {moeda(valor_m2)}/m²")
+        if adicional_laminacao_m2 > 0:
+            st.write(f"**Adicional de laminação:** {moeda(adicional_laminacao_m2)}/m²")
+            st.write(f"**Valor total da laminação:** {moeda(adicional_laminacao)}")
         st.write(f"**Comissão:** {comissao_pct:.1f}%")
         st.write(f"**Desconto:** {desconto_pct:.1f}%")
 
