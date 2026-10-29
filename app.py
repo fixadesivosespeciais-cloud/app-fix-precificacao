@@ -84,10 +84,10 @@ def valor_m2_por_quantidade(qtd: int):
         return 95.0
     return None
 
-def gerar_pdf(dados):
+def gerar_pdf_cliente(dados):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
-    w, h = A4
+    _, h = A4
 
     y = h - 22*mm
     c.setFont("Helvetica-Bold", 18)
@@ -103,6 +103,7 @@ def gerar_pdf(dados):
         f"Cliente: {dados['cliente'] or '-'}",
         f"Vendedor: {dados['vendedor'] or '-'}",
         f"Data: {dados['data']}",
+        f"Validade da proposta: {dados['validade']} dias",
         "",
         f"Medida: {dados['largura']:.1f} x {dados['altura']:.1f} cm",
         f"Quantidade: {dados['quantidade']}",
@@ -112,36 +113,38 @@ def gerar_pdf(dados):
         "",
         f"Preço final: {moeda(dados['preco_final'])}",
         f"Preço unitário: {moeda3(dados['preco_unitario'])}",
-        f"Comissão ({dados['comissao_pct']:.1f}%): {moeda(dados['comissao_valor'])}",
     ]
+
+    if dados["observacoes"].strip():
+        linhas += ["", "Observações:", dados["observacoes"]]
 
     for linha in linhas:
         c.drawString(20*mm, y, linha)
         y -= 6*mm
 
     c.setFont("Helvetica-Oblique", 8)
-    c.drawString(20*mm, 18*mm, "FIX Comunicação Visual • Cotação gerada pelo aplicativo interno")
+    c.drawString(20*mm, 18*mm, "FIX Comunicação Visual • Cotação comercial")
     c.save()
     buffer.seek(0)
     return buffer.getvalue()
 
+# Cabeçalho
 col_logo, col_txt = st.columns([0.75, 3.25], vertical_alignment="center")
 with col_logo:
     st.image("logo_fix.png", width=135)
-
 with col_txt:
     st.markdown('<div class="fix-title">Precificação FIX</div>', unsafe_allow_html=True)
     st.markdown('<div class="fix-sub">Rótulos e Etiquetas • uso interno de vendedores</div>', unsafe_allow_html=True)
 
 st.divider()
 
+# Dados da cotação
 st.markdown('<div class="section-title">Dados da cotação</div>', unsafe_allow_html=True)
 
 c1, c2 = st.columns(2)
 with c1:
     cliente = st.text_input("Cliente")
     vendedor = st.text_input("Vendedor")
-
 with c2:
     produto = st.selectbox("Produto", ["Rótulos / Etiquetas"])
     data_cotacao = st.date_input("Data", value=date.today(), format="DD/MM/YYYY")
@@ -170,12 +173,17 @@ with c3:
 
 st.markdown('<div class="section-title">Condições comerciais</div>', unsafe_allow_html=True)
 
-c1, c2 = st.columns(2)
+c1, c2, c3 = st.columns(3)
 with c1:
     comissao_pct = st.number_input("Comissão (%)", min_value=0.0, max_value=100.0, value=5.0, step=0.5)
 with c2:
     desconto_pct = st.number_input("Desconto (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.5)
+with c3:
+    validade = st.number_input("Validade da proposta (dias)", min_value=1, max_value=90, value=7, step=1)
 
+observacoes = st.text_area("Observações", placeholder="Ex.: prazo de produção, retirada, acabamento especial...")
+
+# Cálculo
 area_unitaria = (largura / 100) * (altura / 100)
 area_total = area_unitaria * quantidade
 valor_m2 = valor_m2_por_quantidade(int(quantidade))
@@ -194,31 +202,23 @@ else:
     c1, c2, c3 = st.columns([1.4, 1, 1])
 
     with c1:
-        html = f"""
-        <div class="result-card">
-            <div class="result-label">PREÇO FINAL</div>
-            <div class="result-value">{moeda(preco_final)}</div>
-        </div>
-        """
-        st.markdown(html, unsafe_allow_html=True)
-
+        st.markdown(
+            f'<div class="result-card"><div class="result-label">PREÇO FINAL</div>'
+            f'<div class="result-value">{moeda(preco_final)}</div></div>',
+            unsafe_allow_html=True
+        )
     with c2:
-        html = f"""
-        <div class="result-card">
-            <div class="result-label">PREÇO UNITÁRIO</div>
-            <div class="result-small">{moeda3(preco_unitario)}</div>
-        </div>
-        """
-        st.markdown(html, unsafe_allow_html=True)
-
+        st.markdown(
+            f'<div class="result-card"><div class="result-label">PREÇO UNITÁRIO</div>'
+            f'<div class="result-small">{moeda3(preco_unitario)}</div></div>',
+            unsafe_allow_html=True
+        )
     with c3:
-        html = f"""
-        <div class="result-card">
-            <div class="result-label">COMISSÃO</div>
-            <div class="result-small">{moeda(comissao_valor)}</div>
-        </div>
-        """
-        st.markdown(html, unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="result-card"><div class="result-label">COMISSÃO</div>'
+            f'<div class="result-small">{moeda(comissao_valor)}</div></div>',
+            unsafe_allow_html=True
+        )
 
     with st.expander("Detalhes da cotação"):
         st.write(f"**Área total:** {area_total:.2f} m²")
@@ -226,13 +226,14 @@ else:
         st.write(f"**Comissão:** {comissao_pct:.1f}%")
         st.write(f"**Desconto:** {desconto_pct:.1f}%")
 
-    resumo = f"""FIX COMUNICAÇÃO VISUAL
+    # Texto para WhatsApp - sem comissão
+    whatsapp = f"""FIX COMUNICAÇÃO VISUAL
 
 COTAÇÃO DE RÓTULOS / ETIQUETAS
 
 Cliente: {cliente or "-"}
-Vendedor: {vendedor or "-"}
 Data: {data_cotacao.strftime("%d/%m/%Y")}
+Validade: {validade} dias
 
 Medida: {largura:.1f} x {altura:.1f} cm
 Quantidade: {quantidade}
@@ -244,10 +245,17 @@ PREÇO FINAL: {moeda(preco_final)}
 PREÇO UNITÁRIO: {moeda3(preco_unitario)}
 """
 
+    if observacoes.strip():
+        whatsapp += f"\nObservações: {observacoes.strip()}\n"
+
+    st.markdown("### Texto para WhatsApp")
+    st.text_area("Copie e envie ao cliente", value=whatsapp, height=280)
+
     dados_pdf = {
         "cliente": cliente,
         "vendedor": vendedor,
         "data": data_cotacao.strftime("%d/%m/%Y"),
+        "validade": validade,
         "largura": largura,
         "altura": altura,
         "quantidade": quantidade,
@@ -256,27 +264,15 @@ PREÇO UNITÁRIO: {moeda3(preco_unitario)}
         "corte": corte,
         "preco_final": preco_final,
         "preco_unitario": preco_unitario,
-        "comissao_pct": comissao_pct,
-        "comissao_valor": comissao_valor,
+        "observacoes": observacoes,
     }
 
-    c1, c2 = st.columns(2)
-    with c1:
-        st.download_button(
-            "Baixar resumo para WhatsApp",
-            data=resumo.encode("utf-8"),
-            file_name="cotacao_fix.txt",
-            mime="text/plain",
-            use_container_width=True,
-        )
-
-    with c2:
-        st.download_button(
-            "Gerar PDF da cotação",
-            data=gerar_pdf(dados_pdf),
-            file_name="cotacao_fix.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-        )
+    st.download_button(
+        "Gerar PDF da cotação",
+        data=gerar_pdf_cliente(dados_pdf),
+        file_name="cotacao_fix.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+    )
 
 st.markdown('<div class="footer">FIX Comunicação Visual • Aplicativo interno de precificação</div>', unsafe_allow_html=True)
