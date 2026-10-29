@@ -2,6 +2,7 @@
 import streamlit as st
 from datetime import date
 from io import BytesIO
+from urllib.parse import quote
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
@@ -248,6 +249,8 @@ PREÇO UNITÁRIO: {moeda3(preco_unitario)}
     st.markdown("### Texto para WhatsApp")
     st.text_area("Prévia do texto", value=whatsapp, height=280)
 
+    whatsapp_url = "https://api.whatsapp.com/send?text=" + quote(whatsapp)
+
     dados_pdf = {
         "cliente": cliente,
         "vendedor": vendedor,
@@ -266,11 +269,9 @@ PREÇO UNITÁRIO: {moeda3(preco_unitario)}
 
     c1, c2 = st.columns(2)
     with c1:
-        st.download_button(
-            "WhatsApp — baixar texto",
-            data=whatsapp.encode("utf-8"),
-            file_name="cotacao_fix_whatsapp.txt",
-            mime="text/plain",
+        st.link_button(
+            "Abrir no WhatsApp",
+            whatsapp_url,
             use_container_width=True,
         )
 
