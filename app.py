@@ -138,7 +138,6 @@ with col_txt:
 
 st.divider()
 
-# Dados da cotação
 st.markdown('<div class="section-title">Dados da cotação</div>', unsafe_allow_html=True)
 
 c1, c2 = st.columns(2)
@@ -183,7 +182,6 @@ with c3:
 
 observacoes = st.text_area("Observações", placeholder="Ex.: prazo de produção, retirada, acabamento especial...")
 
-# Cálculo
 area_unitaria = (largura / 100) * (altura / 100)
 area_total = area_unitaria * quantidade
 valor_m2 = valor_m2_por_quantidade(int(quantidade))
@@ -226,7 +224,6 @@ else:
         st.write(f"**Comissão:** {comissao_pct:.1f}%")
         st.write(f"**Desconto:** {desconto_pct:.1f}%")
 
-    # Texto para WhatsApp - sem comissão
     whatsapp = f"""FIX COMUNICAÇÃO VISUAL
 
 COTAÇÃO DE RÓTULOS / ETIQUETAS
@@ -249,7 +246,7 @@ PREÇO UNITÁRIO: {moeda3(preco_unitario)}
         whatsapp += f"\nObservações: {observacoes.strip()}\n"
 
     st.markdown("### Texto para WhatsApp")
-    st.text_area("Copie e envie ao cliente", value=whatsapp, height=280)
+    st.text_area("Prévia do texto", value=whatsapp, height=280)
 
     dados_pdf = {
         "cliente": cliente,
@@ -267,12 +264,23 @@ PREÇO UNITÁRIO: {moeda3(preco_unitario)}
         "observacoes": observacoes,
     }
 
-    st.download_button(
-        "Gerar PDF da cotação",
-        data=gerar_pdf_cliente(dados_pdf),
-        file_name="cotacao_fix.pdf",
-        mime="application/pdf",
-        use_container_width=True,
-    )
+    c1, c2 = st.columns(2)
+    with c1:
+        st.download_button(
+            "WhatsApp — baixar texto",
+            data=whatsapp.encode("utf-8"),
+            file_name="cotacao_fix_whatsapp.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
+
+    with c2:
+        st.download_button(
+            "Gerar PDF da cotação",
+            data=gerar_pdf_cliente(dados_pdf),
+            file_name="cotacao_fix.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
 
 st.markdown('<div class="footer">FIX Comunicação Visual • Aplicativo interno de precificação</div>', unsafe_allow_html=True)
