@@ -196,7 +196,7 @@ else:
     preco_base = area_total * valor_m2
     adicional_laminacao_m2 = 30.0 if laminacao == "Laminação brilho" else 0.0
     adicional_laminacao = area_total * adicional_laminacao_m2
-    adicional_corte_m2 = 3.0 if corte == "Corte especial" else 0.0
+    adicional_corte_m2 = 12.0 if corte == "Corte especial" else 0.0
     adicional_corte = area_total * adicional_corte_m2
     preco_bruto = preco_base + adicional_laminacao + adicional_corte
     preco_final = preco_bruto * (1 - desconto_pct / 100)
