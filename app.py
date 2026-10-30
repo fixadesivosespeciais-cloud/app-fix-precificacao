@@ -161,15 +161,15 @@ c1, c2, c3 = st.columns(3)
 with c1:
     material = st.selectbox(
         "Material",
-        ["Vinil Branco", "Vinil Transparente", "BOPP", "Papel Couchê", "Papel Adesivo"]
+        ["Vinil branco brilho", "Vinil branco fosco", "Vinil transparente brilho"]
     )
 with c2:
     laminacao = st.selectbox(
         "Laminação",
-        ["Sem laminação", "Laminação brilho", "Laminação fosca"]
+        ["Sem laminação", "Laminação brilho"]
     )
 with c3:
-    corte = st.selectbox("Tipo de corte", ["Contorno", "Reto", "Meio-corte"])
+    corte = st.selectbox("Tipo de corte", ["Simples", "Corte especial"])
 
 st.markdown('<div class="section-title">Condições comerciais</div>', unsafe_allow_html=True)
 
@@ -194,9 +194,11 @@ if valor_m2 is None:
     st.error("Quantidade acima de 1.500 unidades. Consulte a administração.")
 else:
     preco_base = area_total * valor_m2
-    adicional_laminacao_m2 = 30.0 if laminacao in ["Laminação brilho", "Laminação fosca"] else 0.0
+    adicional_laminacao_m2 = 30.0 if laminacao == "Laminação brilho" else 0.0
     adicional_laminacao = area_total * adicional_laminacao_m2
-    preco_bruto = preco_base + adicional_laminacao
+    adicional_corte_m2 = 3.0 if corte == "Corte especial" else 0.0
+    adicional_corte = area_total * adicional_corte_m2
+    preco_bruto = preco_base + adicional_laminacao + adicional_corte
     preco_final = preco_bruto * (1 - desconto_pct / 100)
     preco_unitario = preco_final / quantidade
     comissao_valor = preco_final * (comissao_pct / 100)
@@ -228,6 +230,9 @@ else:
         if adicional_laminacao_m2 > 0:
             st.write(f"**Adicional de laminação:** {moeda(adicional_laminacao_m2)}/m²")
             st.write(f"**Valor total da laminação:** {moeda(adicional_laminacao)}")
+        if adicional_corte_m2 > 0:
+            st.write(f"**Adicional de corte especial:** {moeda(adicional_corte_m2)}/m²")
+            st.write(f"**Valor total do corte especial:** {moeda(adicional_corte)}")
         st.write(f"**Comissão:** {comissao_pct:.1f}%")
         st.write(f"**Desconto:** {desconto_pct:.1f}%")
 
