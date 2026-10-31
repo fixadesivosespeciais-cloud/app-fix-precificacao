@@ -114,6 +114,7 @@ def gerar_pdf_cliente(dados):
         "",
         f"Preço final: {moeda(dados['preco_final'])}",
         f"Preço unitário: {moeda3(dados['preco_unitario'])}",
+        f"Condições de pagamento: {dados['condicoes_pagamento']}",
     ]
 
     if dados["observacoes"].strip():
@@ -180,6 +181,15 @@ with c2:
     desconto_pct = st.number_input("Desconto (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.5)
 with c3:
     validade = st.number_input("Validade da proposta (dias)", min_value=1, max_value=90, value=7, step=1)
+
+condicoes_pagamento = st.selectbox(
+    "CONDIÇÕES DE PAGAMENTO",
+    [
+        "50% sinal, 50% entrega",
+        "Pagamento no pedido (Pix)",
+        "Pagamento na retirada",
+    ],
+)
 
 observacoes = st.text_area("Observações", placeholder="Ex.: prazo de produção, retirada, acabamento especial...")
 
@@ -252,6 +262,8 @@ Tipo de corte: {corte}
 
 PREÇO FINAL: {moeda(preco_final)}
 PREÇO UNITÁRIO: {moeda3(preco_unitario)}
+
+Condições de pagamento: {condicoes_pagamento}
 """
 
     if observacoes.strip():
@@ -276,6 +288,7 @@ PREÇO UNITÁRIO: {moeda3(preco_unitario)}
         "preco_final": preco_final,
         "preco_unitario": preco_unitario,
         "observacoes": observacoes,
+        "condicoes_pagamento": condicoes_pagamento,
     }
 
     c1, c2 = st.columns(2)
